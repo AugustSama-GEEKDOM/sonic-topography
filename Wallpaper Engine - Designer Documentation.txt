@@ -1,0 +1,270 @@
+Wallpaper Engine - Designer Documentation
+# Audio Visualization
+Wallpaper Engine allows you to process audio volume levels for the left and right audio channel and use that to visualize audio that is being played on the user's system. Each channel splits the audio frequencies into 64 parts. Each part represents a frequency range for the audio: Low frequencies represent bass while high frequencies represent treble sound ranges.
+
+Utilizing these volume levels allows you to build various types of audio visualization, from full-on bar audio visualizers, to making certain elements on your wallpaper react to the beat of music (by only looking at low frequency ranges, as they usually represent the beat of audio being played).
+
+# Creating an audio listener
+In order to get started with an audio visualizer, you have to register a listener function in JavaScript that will supply the audio volume levels to you. Wallpaper Engine provides the function for this purpose, it expects a callback function that you also need to create.window.wallpaperRegisterAudioListener
+
+You should call the function once. Please note: Don't register the audio listener within the event (or any similar events), this is unreliable and can lead to Wallpaper Engine missing certain events. When in doubt, call this function at the end of your tag.wallpaperRegisterAudioListenerwindow.onloadbody
+
+In the example below, we're also creating an empty function that is handed as a callback parameter to the . The function will later contain your custom logic for the audio handling. The name for that function is up to you, but it must have parameter that takes the audio volume levels as an array.wallpaperAudioListener(audioArray)wallpaperRegisterAudioListener
+
+function wallpaperAudioListener(audioArray) {
+    // Handle audio input here
+}
+window.wallpaperRegisterAudioListener(wallpaperAudioListener);
+The function will now be called when new audio samples arrive, which occurs roughly 30 times per second.wallpaperAudioListener
+
+# Processing the audio samples
+The actual audio data is included in the that we have created as a parameter to our function above. This array has a fixed length of 128.audioArraywallpaperAudioListener
+
+Array elements 0 until 63 contain volume levels for the left channel. Array elements 64 until 127 contain the volume levels for the right channel.
+
+The lower array elements for each channel represent bass frequencies, so at array index 0, you will find the lowest bass sounds for the left channel and at array element 64, you will find the bass sounds for the right audio channel. The higher up you go in the array, the higher the audio frequencies will get, so array indices closest to 64 will contain treble audio volume levels for the left channel and array indices closest to array index 127 will contain the treble audio volume levels for the right channel.
+
+Each array will generally contain a floating point value from 0.00 to 1.00. 0.00 means that the specific frequency is currently not playing any sound and 1.00 means that the frequency is playing at its maximum volume. However, due to the technical implementation, it can be that in very few cases, the numbers may be much greater than 1.0 For this reason, we recommend limiting the volume values to 1.00 with the help of . See the sample project below for a concrete example.Math.min()
+
+# Audio visualization example
+In the following example, we are providing a very basic full implementation of the audio visualizer previewed above. You can easily copy-paste this into an empty file, import it into Wallpaper Engine and it should work straight away. We don't recommend placing all scripts, styles and HTML content into one file normally, however, for the sake of this tutorial, it's easiest to see it all in one place..html
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <style>
+        body { margin:0; padding:0; }
+        html, body { width:100%; height:100%; overflow:hidden; }
+        canvas { height:100vh; width:100vw }
+    </style>
+    </head>
+    <body>
+        <canvas id="AudioCanvas"></canvas>
+        <script>
+        let audioCanvas = null;
+        let audioCanvasCtx = null;
+        function wallpaperAudioListener(audioArray) {
+            // Clear the canvas and set it to black
+            audioCanvasCtx.fillStyle = 'rgb(0,0,0)';
+            audioCanvasCtx.fillRect(0, 0, audioCanvas.width, audioCanvas.height);
+
+            // Render bars along the full width of the canvas
+            var barWidth = Math.round(1.0 / 128.0 * audioCanvas.width);
+            var halfCount = audioArray.length / 2;
+
+            // Begin with the left channel in red
+            audioCanvasCtx.fillStyle = 'rgb(255,0,0)';
+            // Iterate over the first 64 array elements (0 - 63) for the left channel audio data
+            for (var i = 0; i < halfCount; ++i) {
+                // Create an audio bar with its hight depending on the audio volume level of the current frequency
+                var height = audioCanvas.height * Math.min(audioArray[i], 1);
+                audioCanvasCtx.fillRect(barWidth * i, audioCanvas.height - height, barWidth, height);
+            }
+
+            // Now draw the right channel in blue
+            audioCanvasCtx.fillStyle = 'rgb(0,0,255)';
+            // Iterate over the last 64 array elements (64 - 127) for the right channel audio data
+            for (var i = halfCount; i < audioArray.length; ++i) {
+                // Create an audio bar with its hight depending on the audio volume level
+                // Using audioArray[191 - i] here to inverse the right channel for aesthetics
+                var height = audioCanvas.height * Math.min(audioArray[191 - i], 1);
+                audioCanvasCtx.fillRect(barWidth * i, audioCanvas.height - height, barWidth, height);
+            }
+        }
+
+        // Get the audio canvas once the page has loaded
+        audioCanvas = document.getElementById('AudioCanvas');
+        // Setting internal canvas resolution to user screen resolution
+        // (CSS canvas size differs from internal canvas size)
+        audioCanvas.height = window.innerHeight;
+        audioCanvas.width = window.innerWidth;
+        // Get the 2D context of the canvas to draw on it in wallpaperAudioListener
+        audioCanvasCtx = audioCanvas.getContext('2d');
+
+        // Register the audio listener provided by Wallpaper Engine.
+        window.wallpaperRegisterAudioListener(wallpaperAudioListener);
+        </script>
+    </body>
+</html>
+The HTML and JavaScript example above contains detailed comments that should help you understand it. Let's have a closer look at some of the details, though:
+
+# Normalizing the browser styles
+First, the CSS rules in the block allow the canvas to fit on any resolution and any aspect ratio. You should always make sure that your wallpaper works on any type of screen resolution and aspect ratio, it's bad practice to only consider one resolution in your work and it usually only takes a few minor tweaks to ensure it works fine for all users.<style>
+
+In this example, we're resetting the default and on the body to 0 and hide any (which shouldn't be necessary but it can be a good way to prevent scroll bars appearing in some edge cases). Next up, we set the canvas to be equal to the full width and height of the user's viewport.marginpaddingoverflow
+
+# JavaScript-based normalization and initialization
+For our JavaScript code, it's important that we avoid the function and any similar window events, at least when it comes to the Wallpaper Engine specific code as it can lead to issues with the event system. Since we avoid the event call, it's very important that our JavaScript code is loaded after the HTML body has been rendered already, since our JavaScript directly accesses our canvas. Placing JavaScript at the inside-end of the tag is perfectly valid, so we recommend this approach.window.onloadonloadbody
+
+If you have never worked with elements, it's important to know that they use an internal resolution for rendering and a secondary resolution for its size in HTML / CSS, so it's best to specifically set the canvas height and width to the window height and width with JavaScript, which we're doing in the following two lines of our JavaScript code:canvas
+
+audioCanvas.height = window.innerHeight;
+audioCanvas.width = window.innerWidth;
+At the very end of our JavaScript code sample, we call the function which causes the to be executed whenever new audio data comes in. As noted above, it's important that this call is not placed inside any events such as , you should structure your HTML so that your JavaScript is loaded last and does not depend on events.wallpaperRegisterAudioListenerwallpaperAudioListenerwindowwindow.onloadwindow
+
+The function will draw the left audio channel in red and the right audio channel in blue (in reverse order for aesthetical purpose only). The key part of the code can be found here:
+
+for (var i = 0; i < halfCount; ++i) {
+    // Create an audio bar with its hight depending on the audio volume level of the current frequency
+    var height = audioCanvas.height * Math.min(audioArray[i], 1);
+    audioCanvasCtx.fillRect(barWidth * i, audioCanvas.height - height, barWidth, height);
+}
+The height of the audio bars is determined by the volume level of the frequency that is currently being iterated over in the loop. Let's assume the user has a 1920x1080 screen resolution. If the height of the window is 1080 and the volume level for the current frequency (stored in ) is 0.50, the bar for this specific frequency will be drawn with a height of 540 pixels (1080 * 0.50). This logic is repeated for all audio frequencies, each time Wallpaper Engine supplies a new set of audio data.foraudioArray[i]
+
+You may have noticed that we have also wrapped the into . This is to ensure the audio levels are limited to 1.00 at their peak. Most values will never go above 1.00, but due to the nature of the implementation, in rare cases this might spike above 1.0 which can cause your wallpaper to render incorrectly.audioArray[i]Math.min(audioArray[i], 1);
+
+Of course this is a very basic example and you can change the type of visualization drastically, as you can create much more than just simple audio bars with this type of data. You can also try and add some interpolation between each calls to the function to smoothen the audio bar movement and make it less erratic, but in these cases you should consider adding an FPS limit to your wallpaper.wallpaperAudioListener
+
+# Audio Visualizer Problem Solving
+To conserve performance, Wallpaper Engine will not send audio data to your wallpaper unless you actually load a in the code of your wallpaper. Wallpaper Engine will add the following line to the auto-generated once it detects a properly registered audio listener in the editor preview:wallpaperAudioListenerproject.json
+
+"supportsaudioprocessing" : true,
+This should happen automatically after you import a JavaScript file that is loaded within your main HTML file, however, if you are editing your files on the go, you may need to specifically use the functionality in the editor to force Wallpaper Engine to update your .Saveproject.json
+
+As a last resort, you can also manually add that line to the , though if your code is set up properly, this should not be necessary. You can access the by clicking on Edit at the top of the editor and then selecting Open in Explorer to view your project files.project.jsonproject.json
+
+If you continue to have issues with your visualizers, we recommend setting up a debugger connection for Wallpaper Engine as outlined in the following tutorial, this way you can debug the JavaScript code more effectively and check the incoming audio levels you receive:
+
+Media Integration
+Wallpaper Engine allows you to access information about currently playing music and videos from certain media players, including streaming platforms like Spotify or Tidal. Any application that provides track information through Windows' global media session will work. This feature may have to be enabled in the application playing the content first.
+
+You can typically access a low resolution album cover image, the title and artist of the currently playing content. Some applications may provide additional information, like play time/duration.
+
+#Available media integration listeners
+There are several event listeners available to access different type of information, they only get triggered once that specific part of the currently playing media changes. You should ensure that you are registering your listeners immediately, not after a timeout or in window.onload. When in doubt, register your listeners at the end of your body tag.
+
+The following event listeners are available:
+
+#MediaStatusListener
+This event function will be called when the media integration is turned on or off by the user in the app settings. You can utilize this to adapt your wallpaper for users who choose not to use this feature at all.
+
+#Properties
+enabled: Boolean Whether the user has currently enabled the media integration option.
+
+function wallpaperMediaStatusListener(event) {
+}
+window.wallpaperRegisterMediaStatusListener(wallpaperAudioListener);
+#MediaPropertiesListener
+This event function will be called when the properties of the currently playing media change. It contains text information such as the song title, artist name, album name and more.
+
+#Properties
+title: String Title of the currently playing media.
+
+artist: String Artist of the currently playing media.
+
+subTitle: String Optional sub title of the currently playing media.
+
+albumTitle: String Optional album title of the currently playing media.
+
+albumArtist: String Optional album artist of the currently playing media.
+
+genres: String Optional comma separated list of genres describing the currently playing media.
+
+contentType: String The type of media, can either be music, video or image.
+
+function wallpaperMediaPropertiesListener(event) {
+}
+window.wallpaperRegisterMediaPropertiesListener(wallpaperMediaPropertiesListener);
+#MediaThumbnailListener
+This event function will be called when the thumbnail of the currently playing media changes. It contains the thumbnail of the album art and additional information, such as primary, secondary and tertiary colors used in the album art which you can utilize in your wallpaper. The thumbnail string can be set as src parameter of an img element like this: document.getElementById('mediaThumbnail').src = event.thumbnail;
+
+#Properties
+thumbnail: String Base64 encoded PNG string of the current album cover.
+
+primaryColor: String Primary color of the thumbnail image.
+
+secondaryColor: String Secondary color of the thumbnail image.
+
+tertiaryColor: String Tertiary color of the thumbnail image.
+
+textColor: String Text color guaranteed to have sufficient contrast with primary color. May be secondary or tertiary color when possible.
+
+highContrastColor: String Black or white, depending on what has higher contrast with the primary color.
+
+function wallpaperMediaThumbnailListener(event) {
+}
+window.wallpaperRegisterMediaThumbnailListener(wallpaperMediaThumbnailListener);
+#MediaPlaybackListener
+This event function will be called when the users starts, stops or pauses media playback. You can use the class constants to check for the appropriate state. For example: event.state == window.wallpaperMediaIntegration.playback.PLAYING.
+
+#Properties
+state: Number The current state of the media session. This can be one of three values:
+
+window.wallpaperMediaIntegration.PLAYBACK_PLAYING - Media is actively playing on the system.
+window.wallpaperMediaIntegration.PLAYBACK_PAUSED - Media was previously playing, but playback was (temporarily) paused by the user.
+window.wallpaperMediaIntegration.PLAYBACK_STOPPED - Media playback is completely stopped.
+function wallpaperMediaPlaybackListener(event) {
+}
+window.wallpaperRegisterMediaPlaybackListener(wallpaperMediaPlaybackListener);
+#MediaTimelineListener
+This event function will be called when the current time of the playing media changes. Please note: Not all media players support this feature, make sure your wallpaper also works fine when this function is never called.
+
+#Properties
+position: Number The current position of the track in seconds.
+
+duration: Number The total duration of the track in seconds.
+
+function wallpaperMediaTimelineListener(event) {
+}
+window.wallpaperRegisterMediaTimelineListener(wallpaperMediaTimelineListener);
+#Album cover and title example
+In the following example, we will display the album cover art along with the title and artist information centered on the page. You can copy and paste the script into a new file named index.html and import it in Wallpaper Engine for testing purposes. Normally you would separate .html and .js files, but for this example we are using an embedded JavaScript script to keep it simple.
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<style>
+			body { margin:0; padding:0; }
+			html, body { width:100%; height:100%; overflow:hidden; }
+			.container { height:100vh; width:100vw; display: flex; justify-content: center; align-items: center; }
+			.box { width: 40vw; height: 30vh; display: flex; }
+			.textBox { display: flex; flex-direction: column; justify-content: center; }
+			#albumCoverArt { margin-right: 5vw; }
+			#trackTitle { font-size: 3vh; margin-bottom: 2vh; font-family: sans-serif; }
+			#artist { font-size: 2vh; font-family: sans-serif; }
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="box">
+				<img id="albumCoverArt"/>
+				<div class="textBox">
+					<div id="trackTitle" class="text"></div>
+					<div id="artist" class="text"></div>
+				</div>
+			</div>
+		</div>
+		<script>
+		let albumCoverArt = null;
+		let trackTitle = null;
+		let artist = null;
+
+		function wallpaperMediaPropertiesListener(event) {
+			// Update title and artist labels
+			trackTitle.textContent = event.title;
+			artist.textContent = event.artist;
+		}
+
+		function wallpaperMediaThumbnailListener(event) {
+			// Update album cover art
+			albumCoverArt.src = event.thumbnail;
+			document.body.style['background-color'] = event.primaryColor;
+			trackTitle.style.color = event.textColor;
+			artist.style.color = event.textColor;
+		}
+
+		// Find all required elements
+		albumCoverArt = document.getElementById('albumCoverArt');
+		trackTitle = document.getElementById('trackTitle');
+		artist = document.getElementById('artist');
+
+		// Register the media property listener provided by Wallpaper Engine.
+		window.wallpaperRegisterMediaPropertiesListener(wallpaperMediaPropertiesListener);
+
+		// Register the media thumbnail listener provided by Wallpaper Engine.
+		window.wallpaperRegisterMediaThumbnailListener(wallpaperMediaThumbnailListener);
+		</script>
+	</body>
+</html>
