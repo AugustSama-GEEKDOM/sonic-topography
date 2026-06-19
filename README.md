@@ -1,36 +1,40 @@
-# Sonic Topography
+# Sonic Topography - Wallpaper Engine Edition
 
-Sonic Topography 是一个本地音乐可视化程序，使用 React、Three.js、Vite 和 Web Audio 构建。它可以播放本地 Demo、上传音频和 `.lrc` 歌词、通过本地代理搜索网易云音乐、保存浏览器本地歌单，并用音频频谱驱动地形、波纹和流星效果。
+基于 [sonic-topography](https://github.com/colinrymer/sonic-topography) 改造的 Wallpaper Engine 音频可视化壁纸。
+
+使用 React + Three.js (R3F) + Vite + Web Audio 构建，支持音频频谱驱动的 3D 地形可视化，兼容 Wallpaper Engine 的 `file://` 协议运行环境。
 
 ## 功能
 
-- 3D 音频响应式地形可视化
+- 3D 音频响应式地形可视化（频谱驱动高度/颜色/波纹/流星）
+- **Wallpaper Engine 系统音频桥接** — 通过 `wallpaperRegisterAudioListener` 捕获系统音频
+- **全局 FPS 限制** — 读取用户 Wallpaper Engine 性能设置中的帧率上限
+- **鼠标跟随视角** — 移动鼠标控制摄像机轨道
+- **液态玻璃媒体信息面板** — 右上角展示当前播放曲目信息（framer-motion 动画）
+- **动态主题** — 支持 Wallpaper Engine 媒体集成自动切换主题色
 - 内置 Demo 音频和同步 LRC 歌词
-- 支持上传音频和 `.lrc` 歌词
-- 网易云音乐搜索，并过滤不可播放结果
-- 通过本地代理加载歌词和音频
-- 歌单保存到本地 `data/playlists.json`，浏览器 `localStorage` 作为兜底
-- 支持删除歌单歌曲、删除歌单，并带确认弹窗
-- 支持上一首、下一首
-- 支持顺序播放和随机播放
-- Windows 一键启动脚本
+- 网易云音乐搜索（需本地服务器代理）
+- 音频文件上传 / 拖拽播放
+- 歌单保存到浏览器 `localStorage`
 
-## Windows 一键启动
+## Wallpaper Engine 部署
 
-前提：电脑需要先安装 Node.js。
+### 方法一：直接使用 `dist/` 文件夹
 
-下载或克隆本仓库后，双击：
+1. 克隆本仓库
+2. 打开 Wallpaper Engine → 创建壁纸 → 选择 Web 类型
+3. 指向 `dist/index.html` 即可
 
-```text
-start-sonic-topography.bat
+无需额外构建，`dist/` 已包含单文件 IIFE 打包产物，兼容 `file://` 协议。
+
+### 方法二：自行构建
+
+```powershell
+npm install
+npm run build
 ```
 
-启动脚本会自动：
-
-1. 如果没有 `node_modules/`，自动安装依赖；
-2. 如果没有 `dist/`，自动构建项目；
-3. 打开 `http://127.0.0.1:4173`；
-4. 启动带网易云代理功能的本地生产服务器。
+产物在 `dist/` 目录。
 
 ## 开发运行
 
@@ -39,56 +43,35 @@ npm install
 npm run dev
 ```
 
-打开：
+打开 `http://127.0.0.1:3000`
 
-```text
-http://127.0.0.1:3000
-```
-
-## 本地生产运行
+## 本地生产运行（含网易云代理）
 
 ```powershell
 npm run build
 npm start
 ```
 
-打开：
-
-```text
-http://127.0.0.1:4173
-```
+打开 `http://127.0.0.1:4173`
 
 ## Demo 文件
-
-内置 Demo 文件在：
 
 ```text
 public/demo.mp3
 public/demo.lrc
 ```
 
-如果要替换 Demo，请保持这两个文件名不变。
-
-## 给别人使用
-
-对方可以下载 GitHub 仓库 ZIP，解压后双击：
-
-```text
-start-sonic-topography.bat
-```
-
-注意：这不是完全独立的 `.exe`，对方电脑仍然需要安装 Node.js。
-
 ## 注意事项
 
-- 网易云音乐功能使用的是非官方网页接口，并通过本地服务器代理请求。搜索结果会尽量只显示当前可播放的歌曲，但可播放状态仍可能因为版权、会员、地区或登录限制发生变化。
-- 歌单优先保存在本地文件 `data/playlists.json`。只要保留项目文件夹，重启应用后歌单还在；浏览器 `localStorage` 只作为兜底。
-- `start-sonic-topography.bat` 会在本地启动服务，默认地址是 `http://127.0.0.1:4173`。
+- Wallpaper Engine 环境下网易云搜索功能不可用（无本地服务器），仅本地播放 / 系统音频可视化有效
+- `file://` 协议下 CORS 已处理，构建产物可直接离线运行
+- FPS 限制在 Wallpaper Engine 性能设置中调整，程序自动读取
+- `dist/` 目录已纳入版本管理，方便直接部署
 
 ## 常用命令
 
 ```powershell
-npm run lint
-npm run build
-npm start
+npm run lint      # TypeScript 类型检查
+npm run build     # 生产构建
+npm start         # 启动本地服务器
 ```
