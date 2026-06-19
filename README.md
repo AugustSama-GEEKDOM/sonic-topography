@@ -1,6 +1,6 @@
 # Sonic Topography - Wallpaper Engine Edition
 
-基于 [sonic-topography](https://github.com/colinrymer/sonic-topography) 改造的 Wallpaper Engine 音频可视化壁纸。
+基于 [sonic-topography](https://github.com/yin-yizhen/sonic-topography) 改造的 Wallpaper Engine 音频可视化壁纸。
 
 使用 React + Three.js (R3F) + Vite + Web Audio 构建，支持音频频谱驱动的 3D 地形可视化，兼容 Wallpaper Engine 的 `file://` 协议运行环境。
 
