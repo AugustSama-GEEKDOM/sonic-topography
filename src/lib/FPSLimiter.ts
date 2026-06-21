@@ -1,28 +1,21 @@
 /**
- * Global FPS limiter — reads the user-configured FPS from Wallpaper Engine's
- * wallpaperPropertyListener and provides shouldRender() for custom render loops.
- *
- * Usage pattern follows the official Wallpaper Engine FPS Limiter tutorial:
- * https://docs.wallpaperengine.io/en/web/fps.html
+ * Global FPS state — kept as a lightweight proxy to userSettings.fps
+ * for backward-compatible reads from App.tsx's RAF loop.
  */
 
-const fpsLimiter = {
-  /** Current FPS limit set by the user (0 = unlimited) */
-  fps: 0 as number,
-};
+import { userSettings } from './UserSettings';
 
 /**
- * Register the wallpaperPropertyListener so Wallpaper Engine can push FPS updates.
- * Call once at app startup (before any render loop runs).
+ * Convenience alias — the rendering loop reads fpsLimiter.fps each frame.
+ * The actual value lives in userSettings, updated by wallpaperPropertyListener.
  */
-function initFPSListener(): void {
-  (window as any).wallpaperPropertyListener = {
-    applyGeneralProperties: function (properties: { fps?: number }) {
-      if (typeof properties.fps === 'number') {
-        fpsLimiter.fps = properties.fps;
-      }
-    },
-  };
-}
+const fpsLimiter = {
+  get fps(): number {
+    return userSettings.fps;
+  },
+  set fps(v: number) {
+    userSettings.fps = v;
+  },
+};
 
-export { fpsLimiter, initFPSListener };
+export { fpsLimiter };

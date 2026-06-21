@@ -4,6 +4,7 @@ import { useRef, useMemo, useLayoutEffect, useEffect } from 'react';
 import { MapShaderMaterial } from './CustomShaderMaterial';
 import { engine } from '../../lib/AudioEngine';
 import { themes } from '../../lib/themes';
+import { userSettings } from '../../lib/UserSettings';
 
 extend({ MapShaderMaterial });
 
@@ -185,31 +186,35 @@ export function MapScene({ theme = 'nocturnal' }: { theme?: string }) {
     mat.uWarmCore.lerp(t.uWarmCore, lerpSpeed);
     mat.uWarmEdge.lerp(t.uWarmEdge, lerpSpeed);
     mat.uRippleColor.lerp(t.uRippleColor, lerpSpeed);
-    mat.uGlowIntensity = THREE.MathUtils.lerp(mat.uGlowIntensity, t.uGlowIntensity, lerpSpeed);
+    mat.uGlowIntensity = THREE.MathUtils.lerp(mat.uGlowIntensity, t.uGlowIntensity * userSettings.glowintensity, lerpSpeed);
 
     if (fogRef.current) {
         fogRef.current.color.lerp(t.uBaseColor1, lerpSpeed);
     }
 
     mat.uTime = state.clock.getElapsedTime();
-    mat.uBass = data.bass;
-    mat.uMid = data.mid;
-    mat.uTreble = data.treble;
-    mat.uEnergy = data.energy;
-    
-    mat.uSubBass = data.subBass;
-    mat.uLowMid = data.lowMid;
-    mat.uHighMid = data.highMid;
-    mat.uPresence = data.presence;
-    mat.uBrilliance = data.brilliance;
-    mat.uAir = data.air;
 
-    mat.uWarmth = data.warmth;
-    mat.uBrightness = data.brightness;
-    mat.uSharpness = data.sharpness;
-    mat.uSmoothness = data.smoothness;
-    mat.uDensity = data.density;
-    mat.uSpectralCentroid = data.spectralCentroid;
+    // ── Audio sensitivity multiplier (user-customisable slider) ──
+    const sens = userSettings.audiosensitivity;
+
+    mat.uBass = data.bass * sens;
+    mat.uMid = data.mid * sens;
+    mat.uTreble = data.treble * sens;
+    mat.uEnergy = data.energy * sens;
+    
+    mat.uSubBass = data.subBass * sens;
+    mat.uLowMid = data.lowMid * sens;
+    mat.uHighMid = data.highMid * sens;
+    mat.uPresence = data.presence * sens;
+    mat.uBrilliance = data.brilliance * sens;
+    mat.uAir = data.air * sens;
+
+    mat.uWarmth = data.warmth * sens;
+    mat.uBrightness = data.brightness * sens;
+    mat.uSharpness = data.sharpness * sens;
+    mat.uSmoothness = data.smoothness * sens;
+    mat.uDensity = data.density * sens;
+    mat.uSpectralCentroid = data.spectralCentroid * sens;
     
     // Pass ripples
     mat.uRipples = ripplesRef.current;
@@ -296,7 +301,7 @@ export function MapScene({ theme = 'nocturnal' }: { theme?: string }) {
 
     // Square the mouse offset for a nonlinear feel near center (dead-zone effect)
     const offsetMag = Math.sqrt(mx * mx + my * my);
-    const lerpFactor = 1.5 * delta * (0.2 + offsetMag * 0.8);
+    const lerpFactor = 1.5 * delta * (0.2 + offsetMag * 0.8) * userSettings.camerasensitivity;
 
     const curDir = camera.position.clone().sub(cameraCenter);
     const curDist = curDir.length();

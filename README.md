@@ -16,6 +16,19 @@
 - 网易云音乐搜索（需本地服务器代理）
 - 音频文件上传 / 拖拽播放
 - 歌单保存到浏览器 `localStorage`
+- **用户自定义属性** — 音频灵敏度、光亮强度、视角跟随灵敏度可调
+
+## 用户自定义属性
+
+在 Wallpaper Engine 编辑器中添加以下属性（Edit → Change Project Settings → Add Property）：
+
+| 属性 Key | 类型 | 范围 | 默认值 | 说明 |
+|---|---|---|---|---|
+| `audiosensitivity` | Slider | 0.1 – 5.0 | 1.0 | 音频响应灵敏度倍率 |
+| `glowintensity` | Slider | 0.0 – 3.0 | 1.0 | 地形光亮强度倍率 |
+| `camerasensitivity` | Slider | 0.1 – 3.0 | 1.0 | 鼠标跟随视角灵敏度 |
+
+> 所有 Slider 需启用 **Fraction** 选项（Precision 设为 1，即 0.1 步进）。
 
 ## Wallpaper Engine 部署
 

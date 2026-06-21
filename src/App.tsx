@@ -4,7 +4,8 @@ import { MapScene } from './components/AudioVisualizer/MapScene';
 import { useState, useEffect, useCallback } from 'react';
 import { themes, createDynamicTheme } from './lib/themes';
 import { engine } from './lib/AudioEngine';
-import { fpsLimiter, initFPSListener } from './lib/FPSLimiter';
+import { fpsLimiter } from './lib/FPSLimiter';
+import { initUserSettings } from './lib/UserSettings';
 
 // ── Silence THREE.Clock deprecation warning ──
 // @react-three/fiber (v9) internally creates `new THREE.Clock()` for its store,
@@ -52,6 +53,7 @@ declare global {
     wallpaperRegisterAudioListener?: (callback: (audioArray: number[]) => void) => void;
     wallpaperPropertyListener?: {
       applyGeneralProperties?: (properties: { fps?: number }) => void;
+      applyUserProperties?: (properties: Record<string, { value: any }>) => void;
     };
   }
 }
@@ -76,8 +78,8 @@ export default function App() {
 
   // Register Wallpaper Engine media integration listeners
   useEffect(() => {
-    // ── FPS limiter: read user-configured FPS from Wallpaper Engine performance tab ──
-    initFPSListener();
+    // ── Unified wallpaperPropertyListener: FPS + user-defined properties ──
+    initUserSettings();
 
     // Media status listener — detects whether the user enabled media integration
     if (window.wallpaperRegisterMediaStatusListener) {
