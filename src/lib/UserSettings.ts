@@ -22,6 +22,8 @@ const defaults = {
   glowintensity: 1.0,
   /** Camera mouse-follow sensitivity (0.1 – 3.0, default 1.0) */
   camerasensitivity: 1.0,
+  /** Field-of-view zoom level (0.3 – 3.0, default 1.0; larger = closer) */
+  zoomlevel: 1.0,
 };
 
 /** Reactive settings store — read directly by any module. */
@@ -55,6 +57,10 @@ function initUserSettings(): void {
       if (properties.camerasensitivity) {
         const v = Number(properties.camerasensitivity.value);
         if (!isNaN(v)) userSettings.camerasensitivity = v;
+      }
+      if (properties.zoomlevel) {
+        const v = Number(properties.zoomlevel.value);
+        if (!isNaN(v)) userSettings.zoomlevel = v;
       }
       // Add more user properties here as needed
     },

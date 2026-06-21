@@ -27,6 +27,7 @@
 | `audiosensitivity` | Slider | 0.1 – 5.0 | 1.0 | 音频响应灵敏度倍率 |
 | `glowintensity` | Slider | 0.0 – 3.0 | 1.0 | 地形光亮强度倍率 |
 | `camerasensitivity` | Slider | 0.1 – 3.0 | 1.0 | 鼠标跟随视角灵敏度 |
+| `zoomlevel` | Slider | 0.3 – 3.0 | 1.0 | 视野缩放倍率（越大越近） |
 
 > 所有 Slider 需启用 **Fraction** 选项（Precision 设为 1，即 0.1 步进）。
 

@@ -289,15 +289,16 @@ export function MapScene({ theme = 'nocturnal' }: { theme?: string }) {
     // ── Mouse-driven camera orbit ──
     const mx = mouseRef.current.x;
     const my = mouseRef.current.y;
+    const zoom = userSettings.zoomlevel;
 
     // Map mouse X → azimuth swing  ±0.5 rad, mouse Y → polar tilt ±0.25 rad
     const targetAzimuth = baseAzimuth + mx * 0.5;
     const targetPolar = basePolar - my * 0.25;
-    const targetDistance = baseDistance - my * 5; // closer when mouse up
+    const targetDistance = (baseDistance - my * 5) / zoom; // zoom: larger=closer
 
     // Clamp polar so we don't flip under the plane
     const clampedPolar = THREE.MathUtils.clamp(targetPolar, 0.3, Math.PI / 2 - 0.05);
-    const clampedDistance = THREE.MathUtils.clamp(targetDistance, 15, 80);
+    const clampedDistance = THREE.MathUtils.clamp(targetDistance, 6, 180);
 
     // Square the mouse offset for a nonlinear feel near center (dead-zone effect)
     const offsetMag = Math.sqrt(mx * mx + my * my);
